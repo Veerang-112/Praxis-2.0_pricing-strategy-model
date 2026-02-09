@@ -42,8 +42,8 @@ Delivery time
 
 Ratings
 
-##🏗 Project Architecture
-'''pricing_strategy_project/
+🏗 Project Architecture
+pricing_strategy_project/
 │
 ├── app.py                  # Streamlit interactive dashboard
 ├── model.py                # ML model training + elasticity logic
@@ -51,7 +51,7 @@ Ratings
 ├── requirements.txt
 ├── pricing_dataset.csv
 └── demand_model.pkl        # Generated after model training
-'''
+
 ⚙️ How It Works
 1️⃣ Data Processing
 
