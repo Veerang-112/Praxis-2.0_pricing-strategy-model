@@ -1,172 +1,201 @@
-# 🛒 Pricing Strategy & Demand Trade-off Exploration  
-### 🚀 Retail Analytics | Revenue Strategy | Decision Science
-
----
+# 🛒 Pricing Strategy & Demand Trade-off Exploration
 
 ## 📌 Overview
 
-This project is an **AI-powered Retail Pricing & Demand Simulation Framework** that enables decision-makers to explore how pricing, discounts, and operational variables influence demand and revenue.
+This project is a **Retail Pricing & Demand Simulation Framework** designed to help decision-makers explore how pricing decisions impact product demand and revenue.
 
-It transforms static pricing decisions into **interactive, data-driven strategic simulations**.
+Since direct sales data was not available in the dataset, we use **review volume (`rating_count`) as a demand proxy**, a common analytical practice in e-commerce platforms.
 
----
+The system enables:
 
-## 🎯 Core Capabilities
+- 📈 Demand prediction under different pricing conditions  
+- 🎯 Price elasticity analysis  
+- 🔄 Scenario simulation (“What if price increases?”)  
+- 💰 Revenue impact comparison  
+- 🧠 Business-ready strategic recommendations  
 
-- 📈 **Demand Prediction Engine** – Machine learning–based demand forecasting  
-- 🎯 **Price Elasticity Analysis** – Sensitivity measurement  
-- 🔄 **Scenario Simulation** – “What-if” pricing exploration  
-- 💰 **Revenue Impact Estimation** – Financial trade-off evaluation  
-- 🧠 **Business-Ready Insights** – Strategic, non-technical recommendations  
-
----
-
-# 🎯 Problem Statement
-
-Retail managers often rely on intuition or static rules when making pricing decisions.
-
-However, pricing directly impacts:
-
-- 📦 Demand  
-- 💰 Profit margins  
-- 📊 Inventory turnover  
-- 🏷 Brand positioning  
-
-This system provides an **interactive decision-support environment** to analyze trade-offs between:
-
-- Price  
-- Discount percentage  
-- Rating & visibility  
-- Delivery time  
-- Operational characteristics  
+Built as a hackathon-level **Retail Analytics & Decision Science prototype**.
 
 ---
 
-# 🏗 Project Architecture
+## 🎯 Problem Statement
 
-```bash
-pricing-strategy-simulator/
+Retail managers often rely on static rules or intuition while making pricing decisions. However, pricing influences:
+
+- Demand
+- Profit margins
+- Brand perception
+- Revenue performance
+
+This project provides an interactive simulation environment to analyze trade-offs between:
+
+- Discounted Price  
+- Actual Price  
+- Discount Percentage  
+- Ratings  
+- Profit Margins  
+
+---
+
+## 📊 Dataset Adaptation
+
+The updated dataset does **not include direct sales or stock data**.
+
+Therefore:
+
+### 🔁 Demand Proxy Used:
+```
+rating_count → Proxy for product demand
+```
+
+Why?
+
+Higher number of reviews generally correlates with higher product sales on e-commerce platforms.
+
+This ensures:
+
+- Business realism  
+- Analytical validity  
+- Practical interpretability  
+
+---
+
+## 🏗 Project Architecture
+
+```
+pricing_strategy_project/
 │
 ├── app.py                  # Streamlit interactive dashboard
 ├── model.py                # ML model training + elasticity logic
-├── analysis.py             # Exploratory data analysis
+├── pricing_dataset.csv     # Hackathon dataset
+├── demand_model.pkl        # Generated after model training
 ├── requirements.txt
-├── pricing_dataset.csv
-└── demand_model.pkl        # Generated after model training
+└── README.md
 ```
 
 ---
 
-# ⚙️ System Workflow
+## ⚙️ How It Works
 
-## 1️⃣ Data Processing
+### 1️⃣ Data Processing
 
-- Load dataset  
-- Create derived feature:
+- Cleans ₹ symbols and percentage signs
+- Converts text values to numeric
+- Removes missing values
+- Creates derived feature:
 
 ```
-demand = sold_quantity / (stock + 1)
+profit_margin = discounted_price - actual_price
 ```
-
-- Select key pricing & operational features  
 
 ---
 
-## 2️⃣ Machine Learning Model
+### 2️⃣ Machine Learning Model
 
-We use **XGBoost Regressor** to predict demand based on:
+We use:
 
-- Final price  
-- Discount percentage  
-- Rating  
-- Number of reviews  
-- Delivery time  
-- Profit margin  
-- Product weight  
-- Shelf life  
+```
+XGBoost Regressor
+```
 
-### 💡 Why XGBoost?
+### Features Used:
 
-- Handles non-linear pricing behavior  
-- Strong performance on structured retail data  
-- Robust to feature interactions  
+- discounted_price
+- actual_price
+- discount_percentage
+- rating
+- profit_margin
+
+### Target:
+
+```
+rating_count (Demand Proxy)
+```
+
+Why XGBoost?
+
+- Handles non-linear pricing effects
+- Robust for structured retail data
+- High predictive performance
 
 ---
 
-## 3️⃣ Price Elasticity Calculation
+### 3️⃣ Price Elasticity Calculation
 
-Elasticity measures how sensitive demand is to price changes.
+Elasticity measures demand sensitivity to price changes.
+
+Formula:
 
 ```
 Elasticity = (% change in demand) / (% change in price)
 ```
 
-### Interpretation Guide
+Interpretation:
 
-| Elasticity Value | Business Meaning |
-|------------------|-----------------|
+| Elasticity | Meaning |
+|------------|----------|
 | < -1 | Highly price sensitive |
 | -1 to 0 | Moderately sensitive |
-| Close to 0 | Low sensitivity |
+| Close to 0 | Low sensitivity (inelastic) |
 
 ---
 
-## 4️⃣ Scenario Simulation Engine
+### 4️⃣ Scenario Simulation
 
-Users can dynamically adjust:
+Users can modify:
 
-- 🎚 Price  
-- 🎟 Discount  
-- 🚚 Delivery time  
-- ⭐ Rating  
+- Discounted Price  
+- Actual Price  
+- Discount Percentage  
+- Rating  
 
-The dashboard instantly recalculates:
+The app instantly recalculates:
 
-- Predicted demand  
-- Expected revenue  
-- Elasticity  
-- Strategic recommendation  
+- 📈 Predicted Demand  
+- 💰 Estimated Revenue  
+- 🎯 Price Elasticity  
+- 🧠 Strategic Recommendation  
 
 ---
 
-# 🚀 Installation & Setup
+## 🚀 Installation & Setup
 
-## 🔹 Step 1: Clone Repository
+### Step 1: Clone Repository
 
-```bash
+```
 git clone https://github.com/your-username/pricing-strategy-simulator.git
 cd pricing-strategy-simulator
 ```
 
 ---
 
-## 🔹 Step 2: Create Virtual Environment
+### Step 2: Create Virtual Environment
 
-### Windows
-```bash
+**Windows**
+```
 python -m venv venv
 venv\Scripts\activate
 ```
 
-### Mac/Linux
-```bash
+**Mac/Linux**
+```
 python3 -m venv venv
 source venv/bin/activate
 ```
 
 ---
 
-## 🔹 Step 3: Install Dependencies
+### Step 3: Install Dependencies
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
 ---
 
-## 🔹 Step 4: Train the Model
+### Step 4: Train the Model
 
-```bash
+```
 python model.py
 ```
 
@@ -178,9 +207,9 @@ demand_model.pkl
 
 ---
 
-## 🔹 Step 5: Launch the Dashboard
+### Step 5: Run the Application
 
-```bash
+```
 streamlit run app.py
 ```
 
@@ -192,70 +221,78 @@ http://localhost:8501
 
 ---
 
-# 📊 Key Features
+## 📈 Key Features
 
-### ✅ Demand Prediction Engine  
-ML-powered real-time demand estimation.
+✅ Demand Prediction Engine (ML-based)
 
-### ✅ Elasticity Analysis  
-Understand product-level price sensitivity.
+✅ Elasticity Analysis
 
-### ✅ Revenue Simulation  
-Evaluate short-term pricing impact.
+✅ Revenue Simulation
 
-### ✅ Business Narratives  
-Executive-friendly strategic insights.
+✅ Business Recommendation Logic
 
-### ✅ Interactive UI  
-Dynamic pricing sliders and scenario exploration.
+✅ Interactive Dashboard (Streamlit)
 
 ---
 
-# 📈 Business Impact
+## 🧠 How ML + Analytics Were Used
+
+| Component | Usage |
+|------------|--------|
+| Machine Learning | Demand prediction using XGBoost |
+| Feature Engineering | Profit margin creation |
+| Elasticity Modeling | Sensitivity measurement |
+| Scenario Simulation | Real-time decision testing |
+
+---
+
+## 💼 Business Value
 
 This tool enables:
 
-- 📌 Smarter pricing decisions  
-- 📌 Risk-aware revenue optimization  
-- 📌 Category-level strategy comparison  
-- 📌 Evidence-based discount planning  
+- Smarter pricing decisions  
+- Revenue optimization  
+- Discount impact evaluation  
+- Risk-aware price adjustments  
 
-### Example Insight
+Example Insight:
 
-> Increasing price by 5% in low-elasticity categories can increase revenue without significant demand loss.
+> If elasticity is low, price increase may improve revenue without significant demand drop.
 
 ---
 
-# 🧠 Hackathon Evaluation Alignment
+## 🛠 Tech Stack
 
-| Evaluation Criteria | How Addressed |
-|--------------------|---------------|
+- Python  
+- Pandas  
+- NumPy  
+- XGBoost  
+- Scikit-learn  
+- Streamlit  
+
+---
+
+## 🔮 Future Enhancements
+
+- SHAP Explainability
+- Category-level comparison
+- Revenue heatmaps
+- Automated PDF strategy reports
+- A/B pricing simulations
+
+---
+
+## 📌 Hackathon Evaluation Alignment
+
+| Criteria | How Addressed |
+|------------|--------------|
 | Actionability | Real pricing recommendations |
 | Interpretability | Elasticity explanation |
-| Business Realism | Revenue-margin trade-offs |
-| Scenario Simulation | Interactive decision support |
+| Business realism | Revenue + margin trade-offs |
+| Scenario simulation | Interactive decision support |
 
 ---
 
-# 🛠 Tech Stack
+## 👨‍💻 Developed For
 
-- 🐍 Python  
-- 📊 Pandas  
-- 🔢 NumPy  
-- 🚀 XGBoost  
-- 🤖 Scikit-learn  
-- 🌐 Streamlit  
-- 📈 Matplotlib / Seaborn  
-
----
-
-# 🔮 Future Enhancements
-
-- SHAP Explainability Integration  
-- Long-term demand decay modeling  
-- Outlet-level pricing optimization  
-- Automated PDF strategy reports  
-- A/B pricing experimentation module  
-
----
-
+Retail Analytics | Revenue Strategy | Decision Science Hackathon
