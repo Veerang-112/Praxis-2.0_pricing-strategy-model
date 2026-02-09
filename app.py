@@ -1,77 +1,135 @@
 import streamlit as st
 import pandas as pd
-import joblib
 import numpy as np
+import joblib
 
-st.set_page_config(page_title="Pricing Strategy Simulator", layout="wide")
-
+# -----------------------------
+# Load Model
+# -----------------------------
 model = joblib.load("demand_model.pkl")
+
+# -----------------------------
+# Load Dataset
+# -----------------------------
 df = pd.read_csv("pricing_dataset.csv")
+df.columns = df.columns.str.strip()
 
-df["demand"] = df["sold_quantity"] / (df["stock"] + 1)
+# Clean dataset same as model.py
+df["discounted_price"] = df["discounted_price"].str.replace("₹", "").str.replace(",", "").astype(float)
+df["actual_price"] = df["actual_price"].str.replace("₹", "").str.replace(",", "").astype(float)
+df["discount_percentage"] = df["discount_percentage"].str.replace("%", "").astype(float)
+df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+df["rating_count"] = df["rating_count"].str.replace(",", "").astype(float)
 
-st.title("🛒 Pricing & Demand Trade-off Simulator")
+df = df.dropna()
 
-# ---- Sidebar Controls ----
-st.sidebar.header("Scenario Inputs")
+# -----------------------------
+# Streamlit UI
+# -----------------------------
 
-category = st.sidebar.selectbox("Category", df["category"].unique())
-sample = df[df["category"] == category].iloc[0]
+st.title("🛒 Pricing Strategy & Demand Simulator")
+st.markdown("Explore how pricing decisions impact demand and revenue.")
+
+st.sidebar.header("📊 Scenario Controls")
 
 price = st.sidebar.slider(
-    "Final Price",
-    float(sample["final_price"] * 0.5),
-    float(sample["final_price"] * 1.5),
-    float(sample["final_price"])
+    "Discounted Price (₹)",
+    int(df["discounted_price"].min()),
+    int(df["discounted_price"].max()),
+    int(df["discounted_price"].mean())
 )
 
-discount = st.sidebar.slider("Discount %", 0, 60, int(sample["discount_pct"]))
-delivery = st.sidebar.slider("Delivery Time (min)", 5, 90, int(sample["delivery_time_min"]))
-rating = st.sidebar.slider("Rating", 1.0, 5.0, float(sample["rating"]))
+actual_price = st.sidebar.slider(
+    "Actual Price (₹)",
+    int(df["actual_price"].min()),
+    int(df["actual_price"].max()),
+    int(df["actual_price"].mean())
+)
 
-input_data = {
-    "final_price": price,
-    "discount_pct": discount,
-    "rating": rating,
-    "num_reviews": sample["num_reviews"],
-    "delivery_time_min": delivery,
-    "profit_margin_pct": sample["profit_margin_pct"],
-    "weight_g": sample["weight_g"],
-    "shelf_life_days": sample["shelf_life_days"]
-}
+discount = st.sidebar.slider(
+    "Discount Percentage (%)",
+    0,
+    90,
+    int(df["discount_percentage"].mean())
+)
 
-pred_demand = model.predict(pd.DataFrame([input_data]))[0]
+rating = st.sidebar.slider(
+    "Product Rating",
+    1.0,
+    5.0,
+    float(df["rating"].mean())
+)
 
-revenue = price * pred_demand
+# -----------------------------
+# Feature Engineering
+# -----------------------------
+profit_margin = price - actual_price
 
-# ---- Outputs ----
-st.metric("📦 Predicted Demand Index", round(pred_demand, 3))
-st.metric("💰 Expected Revenue", f"₹ {round(revenue,2)}")
+input_data = pd.DataFrame([[
+    price,
+    actual_price,
+    discount,
+    rating,
+    profit_margin
+]], columns=[
+    "discounted_price",
+    "actual_price",
+    "discount_percentage",
+    "rating",
+    "profit_margin"
+])
 
-# ---- Elasticity ----
-base = input_data.copy()
-base_price = base["final_price"]
-base_demand = pred_demand
+# -----------------------------
+# Prediction
+# -----------------------------
+predicted_demand = model.predict(input_data)[0]
 
-base["final_price"] = base_price * 1.05
-new_demand = model.predict(pd.DataFrame([base]))[0]
+# Revenue Calculation
+predicted_revenue = predicted_demand * price
 
-elasticity = ((new_demand - base_demand) / base_demand) / 0.05
+# -----------------------------
+# Elasticity Approximation
+# -----------------------------
+price_change = 0.05 * price
+new_price = price + price_change
 
-st.subheader("📉 Price Elasticity")
-st.write(round(elasticity, 2))
+new_profit_margin = new_price - actual_price
 
-if elasticity < -1:
-    st.error("Highly price sensitive → avoid price hikes")
-else:
-    st.success("Low price sensitivity → price increase possible")
+new_input = pd.DataFrame([[
+    new_price,
+    actual_price,
+    discount,
+    rating,
+    new_profit_margin
+]], columns=input_data.columns)
 
-# ---- Business Summary ----
+new_demand = model.predict(new_input)[0]
+
+elasticity = ((new_demand - predicted_demand) / predicted_demand) / (price_change / price)
+
+# -----------------------------
+# Display Results
+# -----------------------------
+st.subheader("📈 Simulation Results")
+
+st.metric("Predicted Demand (Proxy)", int(predicted_demand))
+st.metric("Estimated Revenue (₹)", int(predicted_revenue))
+st.metric("Price Elasticity", round(elasticity, 2))
+
+# -----------------------------
+# Business Recommendation
+# -----------------------------
 st.subheader("🧠 Strategic Recommendation")
 
-if discount > 30 and pred_demand < 0.2:
-    st.warning("High discount but weak demand → visibility or delivery issue")
-elif price < sample["final_price"]:
-    st.success("Lower price improves volume but margin trade-off exists")
+if elasticity < -1:
+    st.warning("Demand is highly price sensitive. Increasing price may significantly reduce demand.")
+elif -1 <= elasticity < 0:
+    st.info("Demand is moderately sensitive. Small price changes can be optimized.")
 else:
-    st.info("Balanced pricing with sustainable demand")
+    st.success("Demand is relatively inelastic. Price increase may improve revenue.")
+
+st.markdown("""
+### 📌 Insight:
+We use **rating_count as a demand proxy**, since real sales data was not available.
+Higher review volume typically correlates with higher product sales in e-commerce.
+""")
